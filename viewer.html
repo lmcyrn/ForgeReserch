@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script src="https://developer.api.autodesk.com/viewingservice/v1/viewers/three.js?v=2.16"></script>
+	<link rel="stylesheet" href="https://developer.api.autodesk.com/viewingservice/v1/viewers/style.css?v=2.16" />
+	<script src="https://developer.api.autodesk.com/viewingservice/v1/viewers/viewer3D.js?v=v2.16"></script>
+    <script src="./webvr-polyfill.js"></script>
+
+</head>
+<body onload="initialize()">
+<div id="viewer" style="width:100%; height:100%;"></div>
+<script>
+	function authMe () { return ('eyJhbGciOiJIUzI1NiIsImtpZCI6Imp3dF9zeW1tZXRyaWNfa2V5In0.eyJjbGllbnRfaWQiOiJURzh4ZXFOek9yWWNHVkM1TmVHZkZQUktNYTQ0alQ2QiIsImV4cCI6MTUwODIyODcyMywic2NvcGUiOlsiZGF0YTpyZWFkIiwiZGF0YTp3cml0ZSIsImJ1Y2tldDpjcmVhdGUiLCJidWNrZXQ6cmVhZCJdLCJhdWQiOiJodHRwczovL2F1dG9kZXNrLmNvbS9hdWQvand0ZXhwNjAiLCJqdGkiOiJVUWFrRzRxSlJPYm1qNlQ5TDVWWWYyTlhzNHBIT0xocjUwYXdWbUdqZENoZDNSclNDbVhYQzNwTzNVS2JPMVRFIn0.yCJAEQxURq0V_I-QEoHGRAFv3sMn6kLMCnqySWEQogw') ; }
+
+	function initialize () {
+		var options ={
+			'document' : "urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Zm9yZ2UtY3NoYXJwLXNhbXBsZS1hcHAtdGc4eGVxbnpvcnljZ3ZjNW5lZ2ZmcHJrbWE0NGp0NmIvbXktZWxlcGhhbnQub2Jq",
+			'env': 'AutodeskProduction',
+			'getAccessToken': authMe
+		} ;
+		var viewerElement =document.getElementById ('viewer') ;
+		//var viewer =new Autodesk.Viewing.Viewer3D (viewerElement, {}) ; / No toolbar
+		var viewer =new Autodesk.Viewing.Private.GuiViewer3D (viewerElement,{}) ; // With toolbar
+		Autodesk.Viewing.Initializer (options, function () {
+			viewer.initialize () ;
+			loadDocument (viewer, options.document) ;
+            viewer.loadExtension('Autodesk.Viewing.WebVR', Autodesk.Viewing.createViewerConfig());
+		}) ;
+	}
+	function loadDocument (viewer, documentId) {
+		// Find the first 3d geometry and load that.
+		Autodesk.Viewing.Document.load (
+			documentId,
+			function (doc) { // onLoadCallback
+				var geometryItems =[] ;
+				geometryItems =Autodesk.Viewing.Document.getSubItemsWithProperties (
+					doc.getRootItem (),
+					{ 'type' : 'geometry', 'role' : '3d' },
+					true
+				) ;
+				if ( geometryItems.length <= 0 ) {
+					geometryItems =Autodesk.Viewing.Document.getSubItemsWithProperties (
+						doc.getRootItem (),
+						{ 'type': 'geometry', 'role': '2d' },
+						true
+					) ;
+				}
+				if ( geometryItems.length > 0 )
+					viewer.load (
+						doc.getViewablePath (geometryItems [0])//,
+						//null, null, null,
+						//doc.acmSessionId /*session for DM*/
+					) ;
+			},
+			function (errorMsg) { // onErrorCallback
+				alert("Load Error: " + errorMsg) ;
+			}//,
+			//{
+			//	'oauth2AccessToken': authMe (),
+			//	'x-ads-acm-namespace': 'WIPDM',
+			//	'x-ads-acm-check-groups': 'true',
+			//}
+		) ;
+	}
+</script>
+</body>
+</html>
